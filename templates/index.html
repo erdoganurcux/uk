@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Altın ve Döviz Fiyatları</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <style>
+        body {
+            background-color: #f0f0f0;
+            padding: 20px;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .data-table {
+            overflow-x: auto;
+        }
+
+        .data-table table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .data-table th,
+        .data-table td {
+            border: 1px solid #ecf0f1;
+            padding: 15px;
+            text-align: left;
+        }
+
+        .data-table th {
+            background-color: #3498db;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 25px; /* Başlık yazı boyutunu belirle */
+            margin-top: 0; /* Üstteki boşluğu kaldır */
+        }
+
+        .data-table tbody tr {
+            transition: background-color 0.3s;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #f2f2f2;
+        }
+
+        .alert {
+            font-size: 16px;
+            margin-top: 20px;
+            background-color: #e74c3c;
+            color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .refresh-icon {
+            color: #2ecc71;
+            cursor: pointer;
+        }
+
+        .data-table th:nth-child(4),
+        .data-table td:nth-child(4) {
+            display: none;
+        }
+
+        .data-table .product-name {
+            font-size: 45px; /* Ürün adlarının yazı boyutunu belirle */
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .data-table .buy-sell-price {
+            font-weight: bold;
+            font-size: 38px; /* Alış ve Satış fiyatlarının yazı boyutunu belirle */
+        }
+
+        .data-table .date-time {
+            font-size: 20px; /* Tarih ve Saat yazı boyutunu belirle */
+            color: #555; /* Opsiyonel: Tarih ve Saat rengini belirle */
+        }
+    </style>
+
+    <!-- JavaScript Kodu -->
+    <script>
+        // Sayfayı 5 saniyede bir yenile
+        setInterval(function () {
+            location.reload();
+        }, 5000);
+    </script>
+    <!-- JavaScript Kodu Sonu -->
+</head>
+
+<body>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                {% if akod_data or doviz_data %}
+                <div class="data-table table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Ürün/Döviz Türü</th>
+                                <th>Alış Fiyatı (TL)</th>
+                                <th>Satış Fiyatı (TL)</th>
+                                <th>Fiyat Farkı Yüzdesi</th>
+                                <th>Tarih ve Saat</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in ["Has Altın", "24 Ayar Gram Altın", "22 Ayar Altın", "Çeyrek Ziynet", "Yarım Ziynet", "Tam Ziynet", "Cumhuriyet", "Ons Altın", "Dolar/TL", "Euro/TL", "Gümüş/TL", "IAB Kapanış"] %}
+                            {% if akod_data and product in akod_data|map(attribute='altin_adi') %}
+                            {% set data = akod_data|selectattr('altin_adi', '==', product)|first %}
+                            <tr>
+                                <td class="product-name">{{ data.altin_adi }}</td>
+                                <td class="buy-sell-price">{{ "{:,.2f}".format(data.alis_fiyati).replace(',', '.').replace('.', ',') }} TL</td>
+                                <td class="buy-sell-price">{{ "{:,.2f}".format(data.satis_fiyati).replace(',', '.').replace('.', ',') }} TL</td>
+                                <td style="color:
+                                    {% if data and 'onceki_fiyat_farki_yuzdesi' in data and data.fiyat_farki_yuzdesi > data.onceki_fiyat_farki_yuzdesi %}
+                                        green
+                                    {% elif data and 'onceki_fiyat_farki_yuzdesi' in data and data.fiyat_farki_yuzdesi < data.onceki_fiyat_farki_yuzdesi %}
+                                        red
+                                    {% elif data and 'onceki_fiyat_farki_yuzdesi' in data and data.fiyat_farki_yuzdesi == data.onceki_fiyat_farki_yuzdesi %}
+                                        black
+                                    {% endif %};
+                                ">
+                                    {{ "{:.2f}".format(data.fiyat_farki_yuzdesi) }}%
+                                </td>
+                                <td class="date-time">{{ data.tarih_saat }}</td>
+                            </tr>
+                            {% elif doviz_data and product in doviz_data|map(attribute='doviz_adi') %}
+                            {% set data = doviz_data|selectattr('doviz_adi', '==', product)|first %}
+                            <tr>
+                                <td class="product-name">{{ data.doviz_adi }}</td>
+                                <td class="buy-sell-price">{{ "{:,.2f}".format(data.alis_fiyati).replace(',', '.').replace('.', ',') }} TL</td>
+                                <td class="buy-sell-price">{{ "{:,.2f}".format(data.satis_fiyati).replace(',', '.').replace('.', ',') }} TL</td>
+                                <td style="color:
+                                    {% if data and 'onceki_fiyat_farki_yuzdesi' in data and data.fiyat_farki_yuzdesi > data.onceki_fiyat_farki_yuzdesi %}
+                                        green
+                                    {% elif data and 'onceki_fiyat_farki_yuzdesi' in data and data.fiyat_farki_yuzdesi < data.onceki_fiyat_farki_yuzdesi %}
+                                        red
+                                    {% elif data and 'onceki_fiyat_farki_yuzdesi' in data and data.fiyat_farki_yuzdesi == data.onceki_fiyat_farki_yuzdesi %}
+                                        black
+                                    {% endif %};
+                                ">
+                                    {{ "{:.2f}".format(data.fiyat_farki_yuzdesi) }}%
+                                </td>
+                                <td class="date-time">{{ data.tarih_saat }}</td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Hata Mesajları -->
+        {% for message in get_flashed_messages() %}
+        <div class="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+        <!-- Hata Mesajları Sonu -->
+
+    </div>
+
+</body>
+
+</html>
